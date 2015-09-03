@@ -85,5 +85,13 @@ class JiraXmlRpcTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue(count($issues) > 0);
         $this->assertContainsOnly('TicketBot\JiraIssue', $issues);
     }
+
+    /**
+     * @expectedException \BadMethodCallException
+     */
+    public function testAddRemoteLinkThrowsException()
+    {
+        $this->jira->addRemoteLink(new JiraIssue(), new JiraRemoteLink('foo', 'bar'));
+    }
 }
 

@@ -95,5 +95,34 @@ We use Jira to track the state of pull requests and the versions they got
 included in.
 TEXT;
     }
+
+    public function createMergeCommitLink(PullRequestEvent $pullRequestEvent)
+    {
+        return new JiraRemoteLink(
+            $pullRequestEvent->mergeCommitUrl(),
+            'Merge Commit',
+            sprintf(
+                '%s merged commit %s into %s at %s',
+                $pullRequestEvent->mergedBy(),
+                $pullRequestEvent->mergeCommitSha(),
+                $pullRequestEvent->baseBranch(),
+                $pullRequestEvent->mergedAt()
+            )
+        );
+    }
+
+    public function createPullRequestLink(PullRequestEvent $pullRequestEvent)
+    {
+        return new JiraRemoteLink(
+            $pullRequestEvent->issueUrl(),
+            'Pull Request',
+            $pullRequestEvent->title()
+        );
+    }
+
+    public function createPullRequestLinkRelationship(PullRequestEvent $pullRequestEvent)
+    {
+        return 'relates to PR ' . $pullRequestEvent->repositoryIssueId();
+    }
 }
 

@@ -26,6 +26,10 @@ class Synchronizer
         if ($pullRequestEvent->isOpened()) {
             $newIssue = $project->createTicket($pullRequestEvent);
             $jiraIssue = $this->jira->createIssue($project, $newIssue);
+            $pullRequestLink = $project->createPullRequestLink($pullRequestEvent);
+            $pullRequestLinkRelationship = $project->createPullRequestLinkRelationship($pullRequestEvent);
+
+            $this->jira->addRemoteLink($jiraIssue, $pullRequestLink, $pullRequestLinkRelationship);
 
             $this->github->addComment(
                 $pullRequestEvent->owner(),
@@ -61,7 +65,11 @@ class Synchronizer
 
             if ($issue->belongsTo($pullRequestEvent)) {
                 if ($pullRequestEvent->isClosed() && $pullRequestEvent->isMerged()) {
+                    $mergeCommitLink = $project->createMergeCommitLink($pullRequestEvent);
+                    $mergeCommitLinkRelationship = $project->createPullRequestLinkRelationship($pullRequestEvent);
+
                     $this->jira->resolveIssue($issue);
+                    $this->jira->addRemoteLink($issue, $mergeCommitLink, $mergeCommitLinkRelationship);
                 }
 
                 if ($pullRequestEvent->isClosed() && ! $pullRequestEvent->isMerged()) {

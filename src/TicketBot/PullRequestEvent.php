@@ -81,6 +81,11 @@ class PullRequestEvent
         return $pullRequestId;
     }
 
+    public function repositoryIssueId()
+    {
+        return $this->repository() . '#' . $this->getId();
+    }
+
     public function issuePrefix()
     {
         return "[GH-".$this->getId()."]";
@@ -107,8 +112,41 @@ class PullRequestEvent
         return $issueSearchTerms;
     }
 
+    public function baseBranch()
+    {
+        return $this->event['base']['ref'];
+    }
+
     public function isMerged()
     {
         return $this->event['pull_request']['merged'];
+    }
+
+    public function mergeCommitSha()
+    {
+        return $this->event['pull_request']['merge_commit_sha'];
+    }
+
+    public function mergeCommitUrl()
+    {
+        if ($this->isMerged()) {
+            return sprintf(
+                '%s/commit/%s',
+                $this->event['base']['repo']['html_url'],
+                $this->event['pull_request']['merge_commit_sha']
+            );
+        }
+
+        return null;
+    }
+
+    public function mergedAt()
+    {
+        return $this->event['pull_request']['merged_at'];
+    }
+
+    public function mergedBy()
+    {
+        return $this->event['base']['merged_by'];
     }
 }

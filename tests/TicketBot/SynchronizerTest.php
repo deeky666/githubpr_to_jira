@@ -10,15 +10,11 @@ class SynchronizerTest extends \PHPUnit_Framework_TestCase
 
         $jira = \Phake::mock('TicketBot\Jira');
         $github = \Phake::mock('TicketBot\Github');
+        $project = \Phake::mock('TicketBot\JiraProject');
 
-        $project = new JiraProject();
-
-        \Phake::when($jira)->createIssue(\Phake::anyParameters())->thenReturn(new JiraIssue);
-
-        $synchronizer = new Synchronizer($jira, $github);
-        $synchronizer->accept($event, $project);
-
-        \Phake::verify($github)->addComment("bar", "foo", 127, <<<TEXT
+        $issue = new JiraIssue();
+        $link = new JiraRemoteLink('https://github.com/doctrine/doctrine2/pulls/127', 'Pull Request');
+        $comment = <<<TEXT
 Hello,
 
 thank you for creating this pull request. I have automatically opened an issue
@@ -28,7 +24,22 @@ on our Jira Bug Tracker for you. See the issue link:
 
 We use Jira to track the state of pull requests and the versions they got
 included in.
-TEXT
+TEXT;
+
+        \Phake::when($project)->createTicket(\Phake::anyParameters())->thenReturn(new NewJiraIssue('foo', 'bar'));
+        \Phake::when($jira)->createIssue(\Phake::anyParameters())->thenReturn($issue);
+        \Phake::when($project)->createPullRequestLink(\Phake::anyParameters())->thenReturn($link);
+        \Phake::when($project)->createPullRequestLinkRelationship(\Phake::anyParameters())->thenReturn('relationship');
+        \Phake::when($project)->createNotifyComment(\Phake::anyParameters())->thenReturn($comment);
+
+        $synchronizer = new Synchronizer($jira, $github);
+        $synchronizer->accept($event, $project);
+
+        \Phake::verify($github)->addComment("bar", "foo", 127, $comment);
+        \Phake::verify($jira)->addRemoteLink(
+            $issue,
+            $link,
+            'relationship'
         );
     }
 
@@ -38,17 +49,23 @@ TEXT
 
         $jira = \Phake::mock('TicketBot\Jira');
         $github = \Phake::mock('TicketBot\Github');
+        $project = \Phake::mock('TicketBot\JiraProject');
 
-        $project = new JiraProject();
+        $comment = "A related Github Pull-Request [GH-127] was merged:\nhttps://github.com/doctrine/doctrine2/pulls/127";
+        $link = new JiraRemoteLink('https://github.com/doctrine/doctrine2/commit/9049f1265b7d61be4a8904a9a27120d2064dab3b', 'Merge Commit');
 
         \Phake::when($jira)->search(\Phake::anyParameters())->thenReturn(array(
-            $issue = JiraIssue::createFromArray(array("key" => "DDC-1234"))
+            $issue = JiraIssue::createFromArray(array("key" => "DDC-1234", "summary" => '[GH-127] Issue Summary'))
         ));
+        \Phake::when($project)->createComment(\Phake::anyParameters())->thenReturn($comment);
+        \Phake::when($project)->createMergeCommitLink(\Phake::anyParameters())->thenReturn($link);
+        \Phake::when($project)->createPullRequestLinkRelationship(\Phake::anyParameters())->thenReturn('relationship');
 
         $synchronizer = new Synchronizer($jira, $github);
         $synchronizer->accept($event, $project);
 
-        \Phake::verify($jira)->addComment($issue, "A related Github Pull-Request [GH-127] was merged:\nhttps://github.com/doctrine/doctrine2/pulls/127");
+        \Phake::verify($jira)->addComment($issue, $comment);
+        \Phake::verify($jira)->addRemoteLink($issue, $link, 'relationship');
     }
 
     public function testClosedPullRequest()

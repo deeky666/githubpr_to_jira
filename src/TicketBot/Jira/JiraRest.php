@@ -4,6 +4,7 @@ namespace TicketBot\Jira;
 
 use TicketBot\Jira;
 use TicketBot\JiraProject;
+use TicketBot\JiraRemoteLink;
 use TicketBot\NewJiraIssue;
 use TicketBot\JiraIssue;
 use Jira_Api;
@@ -54,6 +55,22 @@ class JiraRest implements Jira
     public function addComment(JiraIssue $issue, $comment)
     {
         $this->api->addComment($issue->getId(), array('body' => $comment));
+    }
+
+    public function addRemoteLink(JiraIssue $issue, JiraRemoteLink $remoteLink, $relationship = null)
+    {
+        $this->api->api(
+            Jira_Api::REQUEST_POST,
+            sprintf('/rest/api/2/issues/%s/remotelink', $issue->getId()),
+            array(
+                'relationship' => $relationship,
+                'object' => array(
+                    'url' => $remoteLink->url,
+                    'title' => $remoteLink->title,
+                    'summary' => $remoteLink->summary,
+                )
+            )
+        );
     }
 
     public function resolveIssue(JiraIssue $issue)

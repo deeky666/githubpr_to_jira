@@ -4,6 +4,7 @@ namespace TicketBot\Jira;
 
 use TicketBot\Jira;
 use TicketBot\JiraProject;
+use TicketBot\JiraRemoteLink;
 use TicketBot\NewJiraIssue;
 use TicketBot\JiraIssue;
 
@@ -64,6 +65,11 @@ class JiraXmlRpc implements Jira
     public function addComment(JiraIssue $issue, $comment)
     {
         return $this->client->call("jira1.addComment", array($this->token, $issue->key, $comment));
+    }
+
+    public function addRemoteLink(JiraIssue $issue, JiraRemoteLink $remoteLink, $relationship = null)
+    {
+        throw new \BadMethodCallException('Adding remote links to issues is currently unsupported by the XML-RPC API.');
     }
 
     public function resolveIssue(JiraIssue $issue)
